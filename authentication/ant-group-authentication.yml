@@ -1,0 +1,32 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/ac/ams/digital_signature
+docs: https://docs.antom.com/ac/ams/digital_signature
+summary:
+  types: [signature, apiKey]
+  api_key_in: [header]
+  signing: RSA256 (SHA256withRSA), asymmetric RSA key pair
+schemes:
+  - name: DigitalSignature
+    type: signature
+    algorithm: RSA256
+    description: >-
+      Every Antom (Ant Group Global) API request is signed. The signed content is
+      "POST <http-uri>\n<client-id>.<request-time>.<request-body>", signed with the
+      merchant's private RSA key using SHA256withRSA, base64- then URL-encoded.
+      Antom verifies the request with the merchant's uploaded public key; the merchant
+      verifies Antom responses with Antom's public key.
+    headers:
+      - name: Client-Id
+        description: Identifies the merchant/client (e.g. SANDBOX_5X..., production client id).
+      - name: Request-Time
+        description: Request timestamp in milliseconds.
+      - name: Signature
+        description: 'algorithm=RSA256, keyVersion=<version>, signature=<url-encoded-signature>'
+    key_management: >-
+      Merchants generate an RSA key pair and upload the public key to the Antom
+      Dashboard; Antom returns its corresponding public key. Key rotation is
+      supported via keyVersion.
+gateways:
+  - https://open-na-global.alipay.com/ams/api/v1/
+  - region-specific variations available via the SDK EndPointConstants
