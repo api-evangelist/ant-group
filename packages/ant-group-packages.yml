@@ -1,0 +1,46 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/ac/sdks/overview + https://github.com/alipay
+notes: >-
+  Ant Group's global (Antom / Alipay Global) developer surface publishes
+  first-party server and client SDKs under the github.com/alipay organization
+  and language package registries. Client Web/WAP SDK is cited by the official
+  docs llms.txt as the @alipay/antom-sdk npm package.
+packages:
+  - language: java
+    registry: maven
+    name: com.alipay.global.sdk:global-open-sdk-java
+    url: https://github.com/alipay/global-open-sdk-java
+    install: '<dependency><groupId>com.alipay.global.sdk</groupId><artifactId>global-open-sdk-java</artifactId></dependency>'
+    official: true
+  - language: python
+    registry: pypi
+    name: global-open-sdk-python
+    url: https://pypi.org/project/global-open-sdk-python/
+    install: pip install global-open-sdk-python
+    official: true
+  - language: php
+    registry: packagist
+    name: antom/global-open-sdk-php
+    url: https://github.com/alipay/global-open-sdk-php
+    install: composer require antom/global-open-sdk-php
+    official: true
+  - language: go
+    registry: go
+    name: github.com/alipay/global-open-sdk-go
+    url: https://github.com/alipay/global-open-sdk-go
+    install: go get github.com/alipay/global-open-sdk-go
+    official: true
+  - language: dotnet
+    registry: github
+    name: global-open-sdk-dotnet
+    url: https://github.com/alipay/global-open-sdk-dotnet
+    install: 'clone https://github.com/alipay/global-open-sdk-dotnet'
+    official: true
+  - language: javascript
+    registry: npm
+    name: '@alipay/antom-sdk'
+    url: https://www.npmjs.com/package/@alipay/antom-sdk
+    install: npm install @alipay/antom-sdk
+    official: true
+    notes: Antom Web/WAP client SDK (cited by docs.antom.com/llms.txt)

@@ -1,0 +1,27 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/ac/ref/sandbox
+docs: https://docs.antom.com/ac/ref/sandbox
+summary: >-
+  Antom (Ant Group Global) provides a sandbox / Test mode separated from Live via
+  the Antom Dashboard. No test values are invented here; specific test card numbers
+  are issued per merchant in the dashboard rather than published in the reference.
+test_vs_live:
+  separation: Antom Dashboard Test mode vs Live mode
+  credentials_location: 'Dashboard > Developer > Quick start > Integration resources and tools'
+  sandbox_credentials: [sandbox client ID, sandbox domain, sandbox public key]
+  client_id_prefix: 'SANDBOX_'
+tooling:
+  - name: Test Wallet App
+    description: Downloadable test wallet application to simulate digital-wallet payments.
+    docs: https://docs.antom.com/ac/ref/testwallet
+  - name: Error scenario simulation
+    description: >-
+      Tool that returns a specified API result/response for integration testing,
+      including rare production error codes.
+  - name: Test resources
+    docs: https://docs.antom.com/ac/ref/test_resource
+simulation:
+  payment_flow: Call pay, then exercise refund/capture with the returned paymentId.
+  subscription: Sandbox accelerates deduction cycles to ~3-minute intervals, up to 12 cycles.
+dashboard: https://dashboard.alipay.com/global-payments/home

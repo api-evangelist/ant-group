@@ -1,0 +1,511 @@
+# Antom Documentation
+When installing Antom packages, always check the package registry for the latest version rather than relying on memorized version numbers. For the Web/WAP SDK, check [https://www.npmjs.com/package/@alipay/antom-sdk](https://www.npmjs.com/package/@alipay/antom-sdk) (or the CDN hosted version) before pinning a version. For server-side SDKs, check the corresponding package registry for your language (Java/Maven, Node.js/npm, PHP/Packagist, Python/PyPI). Never hardcode an old version number from training data — always install the latest version or verify the current version first.
+
+## Agent Instructions
+As a Large Language Model (LLM) Agent, when designing an Antom integration, always prefer the documentation at [Integration Guide](https://docs.antom.com/integration_guide_en.md) and the [API Reference](https://docs.antom.com/ac/ams/api_fund.md). Do not rely on training data for API parameters, SDK method signatures, or supported payment method lists — always verify against the latest documentation. Payment method availability changes frequently by region.
+
+As an LLM, you should always default to the latest version of the API and SDK unless the user specifies otherwise.
+
+### Product & Integration Routing
+**Product routing:**
+
+| If the merchant wants to... | Product | Guide |
+| --- | --- | --- |
+| Single-transaction payments (goods, service fee, order) | One-time Payments | [Overview](https://docs.antom.com/ac/cashierpay/overview.md) |
+| One-click/auto-debit after one-time authorization (ride-hailing, top-ups) | **Tokenized Payment (API-only)** | [Guide](https://docs.antom.com/ac/tokenized/integration_guide.md) |
+| Recurring auto-debit by cycle (membership, subscription, auto-renewal) | Subscription Payment | [Overview](https://docs.antom.com/ac/subscriptionpay/overview.md) |
+| In-app one-click password-free payments | EasySafePay | [Guide](https://docs.antom.com/ac/easypay/easysafepay_sdk.md) |
+| Authorize on non-browser device (PC, console, TV) | Scan to Link | [Guide](https://docs.antom.com/ac/scantopay/integration_guide.md) |
+| Multiple acquirers with smart routing | APO | [Overview](https://docs.antom.com/ac/apo/intro.md) |
+| **Scenario unclear** | **One-time Payments** | [Overview](https://docs.antom.com/ac/cashierpay/overview.md) |
+
+
+**Integration mode selection:**
+
+| Need | One-time Payments | Subscription Payment | Tokenized Payment | Scan to Link |
+| --- | --- | --- | --- | --- |
+| Quick launch, zero frontend | [Hosted Checkout](https://docs.antom.com/ac/cashierpay/HOSTEDCKP.md) | [Hosted Checkout](https://docs.antom.com/ac/subscriptionpay/HOSTEDCKP_subscription.md) | — | — |
+| Brand embedding, low-code | [Embedded Checkout](https://docs.antom.com/ac/cashierpay/embeddedckp.md) | — | — | — |
+| Partial customization (balanced) | [Payment Element](https://docs.antom.com/ac/cashierpay/element.md) | [Payment Element](https://docs.antom.com/ac/subscriptionpay/element_subscription.md) (PC/H5 only) | — | — |
+| Full control, API-only | [APM API](https://docs.antom.com/ac/cashierpay/apm_api.md) / [Card S2S](https://docs.antom.com/ac/cashierpay/cardinfocallmerchant.md) | [APM API](https://docs.antom.com/ac/subscriptionpay/apm_api_subscription.md) / [Card S2S](https://docs.antom.com/ac/subscriptionpay/cardinfocallmerchant_subscription.md) | **API-only** (only option) | **API-only (only option)** |
+| No PCI certification | [Element](https://docs.antom.com/ac/cashierpay/element.md) / [Hosted](https://docs.antom.com/ac/cashierpay/HOSTEDCKP.md) | [Element](https://docs.antom.com/ac/subscriptionpay/element_subscription.md) / [Hosted](https://docs.antom.com/ac/subscriptionpay/HOSTEDCKP_subscription.md) | — | — |
+
+
+**Key constraints:**
+
++ **Tokenized Payment: API-only.** Element/CKP not supported. Merchant builds own authorization page. Single wallet authorization per request.
++ **Subscription Payment Element: PC/H5 only.** For App, use Hosted Checkout or API-only.
++ **No PCI certification: Use Element or Hosted Checkout.** Card data stays with Antom.
+
+## Guardrails
++ **ALWAYS handle asynchronous notifications.** Never rely solely on synchronous API responses to determine payment results. Implement the notifyPayment webhook to receive final payment status. This is not optional — payment results may only arrive asynchronously for many payment methods.
++ **ALWAYS use idempotency.** Pass a unique paymentRequestId (or refundRequestId for refunds) to prevent duplicate transactions on retry. See [Idempotency](https://docs.antom.com/ac/ams/idempotency.md).
++ **When asked about supported payment methods**, always refer to [Payment Methods Overview](https://docs.antom.com/ac/pm/overview.md) or [Supported Payment Methods](https://docs.antom.com/payment_methods.md) rather than relying on training data. Supported methods and regional coverage change frequently.
++ **For Amount values**, always use the smallest currency unit (e.g., cents for USD, fen for CNY). See [Amount Object Rules](https://docs.antom.com/ac/ref/cc.md) for currency-specific formatting.
+
+## Key Technical Patterns
+**Standard Client SDK flow (One-time Payments / Subscription):**  
+Server calls `createPaymentSession` → receives `paymentSessionData` → passes to Client SDK (`loadAntom` → `createElement` → `mount`) → SDK renders payment UI and handles full payment flow → server receives `notifyPayment` async callback with final result.
+
+**API-only flow (One-time Payments):**  
+Server calls `pay` → receives redirect URLs (`normalUrl` / `schemeUrl` / `applinkUrl`) or QR code → merchant handles buyer redirect or QR display → server receives `notifyPayment` callback.
+
+**Tokenized Payment flow:**  
+Call `consult` to get authorization URL → redirect user to authorize → receive `notifyAuthorization` → call `applyToken` to exchange auth code for `accessToken` → call `pay` (Tokenized) with `accessToken` for each subsequent charge → receive `notifyPayment` for each charge.
+
+**Subscription flow:**  
+Server calls `create` → redirect user to authorize subscription → receive `notifySubscription` on success → Antom automatically deducts each period → server receives `notifyPayment` for each deduction. Use `update` to change plan; `cancel` to stop.
+
+## Quick Start
++ [Welcome to Antom Docs](https://docs.antom.com/documentation.md): Overview of all Antom products, integration paths, and developer resources.
++ [Integration Guide](https://docs.antom.com/integration_guide_en.md): Step-by-step checklist covering account setup, sandbox testing, and go-live requirements. Complete this before launching in production.
++ [Release Notes](https://docs.antom.com/releasenotes.md): Track all API and SDK changes, new features, and deprecations.
++ [Glossary](https://docs.antom.com/glossary.md): Definitions of Antom-specific terms — paymentSessionData, accessToken, paymentRequestId, etc.
++ [Support](https://docs.antom.com/support.md): Contact channels and troubleshooting resources.
+
+## Product Guides
+### One-time Payments
++ [Overview](https://docs.antom.com/ac/cashierpay/overview.md): Features, advantages, supported payment methods, and use cases for one-time online transactions.
++ [Integration Path Selection](https://docs.antom.com/ac/cashierpay/use_cases.md): Compare all integration options and choose based on UX requirements and technical capability.
++ [Payment Element](https://docs.antom.com/ac/cashierpay/element.md): **Recommended.** Drop-in component with full code examples for web integration.
++ [Hosted Checkout](https://docs.antom.com/ac/cashierpay/HOSTEDCKP.md): Redirect to Antom-hosted page. Minimal integration effort.
++ [Embedded Checkout](https://docs.antom.com/ac/cashierpay/embeddedckp.md): Embed Antom checkout via iframe. Balance of control and simplicity.
++ [APM API](https://docs.antom.com/ac/cashierpay/apm_api.md): API-only for alternative payment methods when SDK is not an option.
++ [Card API — Hosted](https://docs.antom.com/ac/cashierpay/cardcollant.md): Card collection via Antom-hosted form.
++ [Card API — S2S](https://docs.antom.com/ac/cashierpay/cardinfocallmerchant.md): Server-to-server card processing. Requires PCI compliance.
++ [SDK Card Payments](https://docs.antom.com/ac/cashierpay/sdk_card.md): Card payment integration via Client SDK.
++ [SDK APM Payments](https://docs.antom.com/ac/cashierpay/apm.md): APM payment integration via Client SDK.
++ [Apple Pay (Element)](https://docs.antom.com/ac/cashierpay/apay_element.md): Accept Apple Pay through Payment Element.
++ [Apple Pay (Hosted)](https://docs.antom.com/ac/cashierpay/apay_hosted.md): Accept Apple Pay through Hosted Checkout.
++ [Apple Pay (Embedded)](https://docs.antom.com/ac/cashierpay/apay_embedded.md): Accept Apple Pay through Embedded Checkout.
++ [Apple Pay (APM API)](https://docs.antom.com/ac/cashierpay/apay_apm_api.md): Accept Apple Pay via API-only integration.
++ [Google Pay (Element)](https://docs.antom.com/ac/cashierpay/gpay_element.md): Accept Google Pay through Payment Element.
++ [Google Pay (Hosted)](https://docs.antom.com/ac/cashierpay/gpay_hosted.md): Accept Google Pay through Hosted Checkout.
++ [Google Pay (Embedded)](https://docs.antom.com/ac/cashierpay/gpay_embedded.md): Accept Google Pay through Embedded Checkout.
++ [Google Pay (APM API)](https://docs.antom.com/ac/cashierpay/gpay_apm_api.md): Accept Google Pay via API-only integration.
++ [PayPay Smart Payment](https://docs.antom.com/ac/cashierpay/paypay_smart.md): PayPay integration with smart payment flow.
++ [Indian APM](https://docs.antom.com/ac/cashierpay/indian_apm.md): Alternative payment methods for India (UPI, Net Banking, etc.).
++ [Indian Cards](https://docs.antom.com/ac/antomop/indian.md): Card payment specifics for the Indian market.
++ [South Korean Issuer-Auth Cards](https://docs.antom.com/ac/cashierpay/kr_issuer_auth.md): Korean cards requiring issuer authentication.
++ [Appearance Customization](https://docs.antom.com/ac/cashierpay/appearance.md): Customize Payment Element visual style, layout, and branding.
++ [Adding Payment Methods](https://docs.antom.com/ac/cashierpay/addpaymeth.md): Add new payment methods to an existing integration.
++ [Payment Method Types](https://docs.antom.com/ac/cashierpay/pay_type.md): Which payment methods are supported by One-time Payments.
++ [Capture](https://docs.antom.com/ac/cashierpay/capture.md): **Only needed when manual capture mode is enabled** (default is auto-capture). Check merchant configuration before using.
++ [Notifications](https://docs.antom.com/ac/cashierpay/notifications.md): Integrate payment result webhooks.
++ [Cancel](https://docs.antom.com/ac/cashierpay/cancel.md): **One-time Payment cancel.** Cancel pending payments within the allowed window. Not the same as Subscription cancel.
++ [Refund](https://docs.antom.com/ac/cashierpay/refund.md): Initiate full or partial refunds against completed payments.
++ [Reconciliation](https://docs.antom.com/ac/cashierpay/reconcile.md): Post-settlement reconciliation using Antom financial reports.
++ [Best Practices](https://docs.antom.com/ac/cashierpay/best_practice.md): Optimize payment experience, conversion, and success rates.
++ [Payment Continuation URL](https://docs.antom.com/ac/cashierpay/config.md): Best practices for handling redirect URLs across web, mobile web, and app.
++ [URLs Returned by Payment Methods](https://docs.antom.com/ac/cashierpay/urls.md): URL types (normalUrl, schemeUrl, applinkUrl) per payment method and client type.
++ [Payment Status Description](https://docs.antom.com/ac/cashierpay/payment_status_desc.md): Status values and logic for querying, canceling, and refunding.
++ [Production Test Cases](https://docs.antom.com/ac/cashierpay/testcases.md): End-to-end validation checklist for going live.
+
+### Subscription Payment
++ [Overview](https://docs.antom.com/ac/subscriptionpay/overview.md): Antom-managed recurring billing — automatic deductions, retry logic, period management.
++ [Integration Path Selection](https://docs.antom.com/ac/subscriptionpay/use_cases.md): Choose between Payment Element, Hosted CKP, or API-only for subscription setup.
++ [Payment Element Recurring](https://docs.antom.com/ac/subscriptionpay/element_subscription.md): **Recommended.** Drop-in recurring payment integration.
++ [Apple Pay Recurring](https://docs.antom.com/ac/subscriptionpay/apay_element_subscription.md): Accept recurring payments with Apple Pay via Payment Element.
++ [Google Pay Recurring](https://docs.antom.com/ac/subscriptionpay/gpay_element_subscription.md): Accept recurring payments with Google Pay via Payment Element.
++ [Apple Pay Recurring (API)](https://docs.antom.com/ac/subscriptionpay/apay_api_subscription.md): API-only Apple Pay recurring subscription.
++ [Google Pay Recurring (API)](https://docs.antom.com/ac/subscriptionpay/gpay_api_subscription.md): API-only Google Pay recurring subscription.
++ [Hosted Recurring](https://docs.antom.com/ac/subscriptionpay/HOSTEDCKP_subscription.md): Subscription via Antom-hosted checkout page.
++ [APM Recurring (API)](https://docs.antom.com/ac/subscriptionpay/apm_api_subscription.md): API-only subscription for alternative payment methods.
++ [Card Recurring — Hosted](https://docs.antom.com/ac/subscriptionpay/cardcollant_subscription.md): Card-based subscription via hosted collection form.
++ [Card Recurring — S2S](https://docs.antom.com/ac/subscriptionpay/cardinfocallmerchant_subscription.md): Server-to-server card subscription. Requires PCI compliance.
++ [Query subscription information](https://docs.antom.com/ac/subscriptionpay/query_subscription_info.md)
++ [Subscription Trial](https://docs.antom.com/ac/subscriptionpay/subscription_trial.md): Configure free or discounted trial periods before paid billing starts.
++ [Subscription Cancellation](https://docs.antom.com/ac/subscriptionpay/subscription_cancellation.md): **Subscription cancel.** Stops recurring billing. Not the same as One-time Payment cancel.
++ [Reconciliation](https://docs.antom.com/ac/subscriptionpay/reconcile.md): Reconcile subscription payments using Antom reports.
++ [Best Practices](https://docs.antom.com/ac/subscriptionpay/best_practice.md): Subscription-specific optimization strategies.
+
+### Tokenized Payment
++ [Overview](https://docs.antom.com/ac/tokenized/overview.md): Merchant-controlled recurring charges — user authorizes once, merchant triggers payments on demand.
++ [Accept Payments](https://docs.antom.com/ac/tokenized/integration_guide.md): Full integration guide covering authorization, token management, and payment triggering.
++ [ACH Direct Debit](https://docs.antom.com/ac/tokenized/ach_guide.md): Accept tokenized ACH Direct Debit payments in the US.
++ [Cancel](https://docs.antom.com/ac/tokenized/cancel.md): Cancel a pending tokenized payment within the allowed window.
++ [Revoke Authorization](https://docs.antom.com/ac/tokenized/revoke_auth.md): **Tokenized Payment revoke.** Cancel user's authorization, accessToken becomes invalid. For EasySafePay deauthorization, see [EasySafePay Revoke](https://docs.antom.com/ac/easypay/revoke.md).
++ [Notifications](https://docs.antom.com/ac/tokenized/notifications.md): Notification integration for authorization, payment, and revocation events.
++ [Refund](https://docs.antom.com/ac/tokenized/refund.md): Refund rules and process for tokenized payment transactions.
++ [Reconciliation](https://docs.antom.com/ac/tokenized/settle_reconcile.md): Reconcile tokenized payment transactions.
++ [Best Practices](https://docs.antom.com/ac/tokenized/practice.md): Optimize tokenized payment flows and authorization rates.
++ [URLs Returned](https://docs.antom.com/ac/tokenized/redirection_details.md): URL types returned for different payment methods.
++ [Authorization URL Best Practices](https://docs.antom.com/ac/tokenized/best_practice.md): Handle authorization redirect URLs across client types.
+
+### EasySafePay
++ [Overview](https://docs.antom.com/ac/easypay/overview.md): One-click password-free payments within the merchant's own app or website.
++ [SDK Integration](https://docs.antom.com/ac/easypay/easysafepay_sdk.md): Integrate EasySafePay using Client SDK. First payment enables password-free; subsequent payments are one-click.
++ [Notifications](https://docs.antom.com/ac/easypay/notifications.md): Payment notification webhooks for EasySafePay.
++ [Cancel](https://docs.antom.com/ac/easypay/cancel.md): Cancel a pending EasySafePay transaction.
++ [Revoke](https://docs.antom.com/ac/easypay/revoke.md): **EasySafePay deauthorization.** Cancel password-free authorization. For Tokenized Payment revoke, see [Tokenized Revoke](https://docs.antom.com/ac/tokenized/revoke_auth.md).
++ [Refund](https://docs.antom.com/ac/easypay/refund.md): Refund rules for EasySafePay transactions.
++ [Reconciliation](https://docs.antom.com/ac/easypay/settle_reconcile.md): Reconcile EasySafePay transactions.
++ [Best Practices](https://docs.antom.com/ac/easypay/practice.md): Maximize EasySafePay adoption and performance.
++ [Security Module Fields](https://docs.antom.com/ac/easypay/security_module_fields.md): Data collected by the SDK security module.
+
+### Scan to Link
++ [Overview](https://docs.antom.com/ac/scantopay/overview.md): QR code authorization for non-browser devices — PC, console, smart TV.
++ [Integration Guide](https://docs.antom.com/ac/scantopay/integration_guide.md): Obtain buyer authorization and payment tokens via QR code scanning.
++ [Revoke Authorization](https://docs.antom.com/ac/scantopay/revoke.md): Handle authorization revocation for Scan to Link.
++ [Notifications](https://docs.antom.com/ac/scantopay/notification.md): Notification integration for Scan to Link.
++ [Cancel](https://docs.antom.com/ac/scantopay/cancel.md): Cancel a pending Scan to Link payment.
++ [Refund](https://docs.antom.com/ac/scantopay/refund.md): Refund a completed Scan to Link transaction.
++ [Reconciliation](https://docs.antom.com/ac/scantopay/settle_reconcile.md): Reconcile Scan to Link transactions.
+
+### Antom Payment Orchestration (APO)
++ [Product Introduction](https://docs.antom.com/ac/apo/intro.md): Multi-acquirer payment management with smart routing for maximizing approval rates.
++ [APO Payment Methods](https://docs.antom.com/ac/apo/payment_methods.md): Supported payment methods and card brands in APO.
++ [Get Started](https://docs.antom.com/ac/apo/get_started.md): Registration, sandbox testing, and live activation for APO.
++ [Transactions](https://docs.antom.com/ac/apo/transactions.md): View and manage APO transaction records.
++ [Enable Payment Methods](https://docs.antom.com/ac/apo/enable_payment_methods.md): Activate payment methods for APO.
++ [Apple Pay Configuration](https://docs.antom.com/ac/apo/apple_pay_config.md): Configure Apple Pay for APO.
++ [Acquirer Management](https://docs.antom.com/ac/apo/acquirer_management.md): Manage acquirer connections and configurations.
++ [Order Number Management](https://docs.antom.com/ac/apo/order_number.md): Configure order number rules for APO.
++ [Orchestration Rules](https://docs.antom.com/ac/apo/payment_operation_rules.md): Create and manage smart routing rules across acquirers.
++ [Risk Management Methods](https://docs.antom.com/ac/apo/risk_methods.md): Risk control configuration for APO transactions.
++ [Payment Status Description](https://docs.antom.com/ac/apo/payment_status.md): Status values and logic for APO transactions.
++ [Asset Data Migration](https://docs.antom.com/ac/apo/data_migration.md): Migrate card asset data between acquirers and APO securely.
++ [Hosted CKP](https://docs.antom.com/ac/apo/HOSTEDCKP.md): Low-code hosted payment page through APO.
++ [Embedded CKP](https://docs.antom.com/ac/apo/embeddedckp.md): Embedded checkout page through APO.
++ [Card — Hosted](https://docs.antom.com/ac/apo/cardcollant.md): Card payment via hosted collection mode.
++ [Card — S2S](https://docs.antom.com/ac/apo/cardinfocallmerchant.md): Server-to-server card processing through APO.
++ [APM API](https://docs.antom.com/ac/apo/apm_api.md): APM integration through APO.
++ [Card Payments (SDK)](https://docs.antom.com/ac/apo/card_sdk.md): Card payment via APO SDK.
++ [SDK Integration](https://docs.antom.com/ac/apo/sdk_integration.md): General APO SDK integration guide.
++ [Popup Web/WAP](https://docs.antom.com/ac/apo/popup_web.md): APO popup integration for web and WAP.
++ [Popup Android](https://docs.antom.com/ac/apo/popup_android.md): APO popup integration for Android.
++ [Popup iOS](https://docs.antom.com/ac/apo/popup_ios.md): APO popup integration for iOS.
++ [Embedded Web/WAP](https://docs.antom.com/ac/apo/embedded_web.md): APO embedded integration for web and WAP.
++ [Embedded Android](https://docs.antom.com/ac/apo/embedded_android.md): APO embedded integration for Android.
++ [Embedded iOS](https://docs.antom.com/ac/apo/embedded_ios.md): APO embedded integration for iOS.
++ [APM Web/WAP](https://docs.antom.com/ac/apo/apm_web.md): APM integration via web/WAP in APO.
++ [South Korean Issuer-Auth Cards](https://docs.antom.com/ac/apo/kr_issuer_auth.md): Korean issuer-authentication card handling in APO.
++ [EDC Payment](https://docs.antom.com/ac/apo/edc.md): In-person card payments through Electronic Data Capture devices.
++ [EDC Popup Mode](https://docs.antom.com/ac/apo/edc_popup.md): EDC payment using popup mode.
++ [EDC Callback Mode](https://docs.antom.com/ac/apo/edc_callback.md): EDC payment using callback mode.
++ [DLL Integration (Windows)](https://docs.antom.com/ac/apo/edc_dll.md): EDC integration via Windows DLL.
++ [Independent Card Binding — Web](https://docs.antom.com/ac/apo/vaulting_web.md): Card vaulting via web in APO.
++ [Independent Card Binding — Android](https://docs.antom.com/ac/apo/vaulting_android.md): Card vaulting via Android SDK in APO.
++ [Independent Card Binding — iOS](https://docs.antom.com/ac/apo/vaulting_ios.md): Card vaulting via iOS SDK in APO.
++ [Popup Vaulting Android](https://docs.antom.com/ac/apo/popup_vaulting_android.md): Card vaulting via popup on Android.
++ [Popup Vaulting iOS](https://docs.antom.com/ac/apo/popup_vaulting_ios.md): Card vaulting via popup on iOS.
++ [Independent Risk Control](https://docs.antom.com/ac/apo/risk_control.md): APO's built-in risk assessment engine.
++ [More Features](https://docs.antom.com/ac/apo/value-added_features.md): 3DS setup, AVS, card storage, MIT, third-party MPI.
++ [Capture](https://docs.antom.com/ac/apo/capture.md): **Only needed when manual capture mode is enabled** in APO. Capture authorized payments.
++ [Notifications](https://docs.antom.com/ac/apo/notifications.md): APO webhook integration.
++ [Dispute](https://docs.antom.com/ac/apo/dispute.md): Handle disputes in APO.
++ [Cancel](https://docs.antom.com/ac/apo/cancel.md): Cancel APO transactions.
++ [Refund](https://docs.antom.com/ac/apo/refund.md): Refund APO transactions.
++ [Reconciliation](https://docs.antom.com/ac/apo/reconciliation.md): APO settlement and reconciliation.
++ [Best Practices](https://docs.antom.com/ac/apo/best_practice.md): APO-specific optimization recommendations.
++ [Best Practices for Redirection URL](https://docs.antom.com/ac/apo/best_practice_redirection.md): Handle redirect URLs in APO integration.
++ [Best Practices for Pre-front Solution](https://docs.antom.com/ac/apo/best_practice_prefront.md): Optimize pre-front solution in APO.
++ [URLs Returned](https://docs.antom.com/ac/apo/urls_returned.md): URL types returned by APO payment methods.
++ [Transaction Details Report](https://docs.antom.com/ac/apo/transaction_details.md): Daily report of all APO transactions.
++ [Settlement Details Report](https://docs.antom.com/ac/apo/settlement_details.md): Per-settlement-period transaction details for APO reconciliation.
++ [Settlement Summary Report](https://docs.antom.com/ac/apo/settlement_summary.md): Summary of total APO transactions and net settlement per period.
+
+### Omnichannel
++ [Overview](https://docs.antom.com/ac/omnichannel/overview.md)
++ [Supported payment methods](https://docs.antom.com/ac/omnichannel/pm.md)
++ [Omnichannel integration solution](https://docs.antom.com/ac/omnichannel/integration.md)
++ [Accept payments with Apple Pay](https://docs.antom.com/ac/omnichannel/apay_hostedckp.md)
++ [Accept payments with Google Pay](https://docs.antom.com/ac/omnichannel/gpay_hostedckp.md)
++ [N950 EDC integration guide](https://docs.antom.com/ac/omnichannel/n950.md)
++ [Overview](https://docs.antom.com/ac/omnichannel/api_fund.md)
++ [diagnosis](https://docs.antom.com/ac/omnichannel/diagnosis.md)
++ [pay](https://docs.antom.com/ac/omnichannel/pay.md)
++ [inquiryPayment](https://docs.antom.com/ac/omnichannel/inquiry_payment.md)
++ [refund](https://docs.antom.com/ac/omnichannel/refund.md)
++ [inquiryRefund](https://docs.antom.com/ac/omnichannel/inquiryRefund.md)
++ [initConnection](https://docs.antom.com/ac/omnichannel/initConnection.md)
++ [diagnosis](https://docs.antom.com/ac/omnichannel/usb_diagnosis.md)
++ [pay](https://docs.antom.com/ac/omnichannel/usb_pay.md)
++ [inquiryPayment](https://docs.antom.com/ac/omnichannel/usb_inquiryPayment.md)
++ [Structure](https://docs.antom.com/ac/omnichannel/usb_structures.md)
+
+## Payment Methods
+> Antom supports 80+ payment methods across 50+ countries. Use the regional routing table below to quickly identify the right payment methods.  
+For the full list with details, see [Supported Payment Methods](https://docs.antom.com/payment_methods.md).
+>
+
+### Regional Quick Reference
+| Region | Top Methods | Card Support | Notes |
+| --- | --- | --- | --- |
+| Southeast Asia | GCash, GoPay, OVO, DANA, ShopeePay, Touch'n Go, TrueMoney, MoMo | Visa, MC, JCB | E-wallets dominant; QRIS (ID), QRPH (PH), PromptPay (TH) |
+| East Asia | KakaoPay, Toss Pay, NAVER Pay, LINE Pay, PayPay, Alipay, AlipayHK | Visa, MC, JCB, UnionPay | KR: cards require 3DS; JP: Konbini for cash; CN: Alipay |
+| Europe | iDEAL, Bancontact, BLIK, EPS, MB WAY, Bizum, Swish, TWINT | Visa, MC, Amex, CB, Maestro | 3DS mandatory (PSD2/SCA); Pay by Bank growing |
+| Latin America | Pix, Mercado Pago | Visa, MC, Amex (BR/CL/MX/PE cards) | Pix instant; BNPL available |
+| South Asia | UPI, Net Banking | Visa, MC, Indian cards | UPI dominant in India |
+| Middle East | Tabby, Tamara | Visa, MC | BNPL dominant |
+| North America | Apple Pay, Google Pay, PayPal, Venmo, Cash App Pay | Visa, MC, Amex, Discover | ACH Direct Debit for bank transfers |
+| Central Asia | Kaspi | Visa, MC | Kaspi dominant in Kazakhstan |
+
+
+### Payment Method Integration
++ [Overview](https://docs.antom.com/ac/pm/overview.md): Essential integration info for all payment methods — required parameters, supported products, and UX flows.
++ [APM Integration Guide](https://docs.antom.com/ac/pm/apm_integration.md): Consolidated guide for alternative payment method (non-card) integration across all Antom products.
++ [Card Integration Guide](https://docs.antom.com/ac/pm/card_integration.md): Consolidated guide for card payment integration including 3DS, tokenization, and saved cards.
++ [Card Features](https://docs.antom.com/ac/pm/card_features.md): Advanced card capabilities — installments, MIT, COF, co-badged cards, and network tokenization.
++ [3D Secure 2](https://docs.antom.com/ac/pm/3ds.md): 3DS authentication for enhanced card payment security. **Required for most European transactions (PSD2/SCA).**
++ [Antom 3DS-Retry](https://docs.antom.com/ac/pm/3ds_retry.md): Intelligent auto-retry for transactions soft-declined due to incomplete 3DS authentication.
++ [Store a Card (SDK)](https://docs.antom.com/ac/pm/cvsdk.md): Pre-built UI component for card vaulting through the Antom SDK.
++ [Store a Card (API)](https://docs.antom.com/ac/pm/cv.md): API-based card vaulting for saving cards at any stage of the payment process.
++ [Antom Tokenization](https://docs.antom.com/ac/pm/tokenization.md): Network tokenization to replace real card numbers with tokens for improved approval rates and security. **Required for India (RBI tokenization).**
++ [Merchant-Initiated Transaction (MIT)](https://docs.antom.com/ac/pm/mit.md): Initiate payments without buyer presence using stored credentials.
++ [Card-on-File (COF)](https://docs.antom.com/ac/pm/cof.md): Process payments using previously saved card details.
++ [Installment Payments](https://docs.antom.com/ac/pm/installment.md): Allow buyers to split card payments into monthly installments.
++ [Co-badged Cards](https://docs.antom.com/ac/pm/co-badged_cards.md): Handle cards that carry multiple network brands.
++ [Payment Method Enumeration Values](https://docs.antom.com/ac/pm/enumeration_values.md): Programmatic identifiers for all payment methods across Antom products.
++ [Payment Method Default Timeout](https://docs.antom.com/ac/pm/default_timeout.md): Default expiration times per payment method.
++ [Specify a Payment Method](https://docs.antom.com/ac/pm/specify_pm.md): Control which payment methods appear in the SDK checkout UI.
++ [Pre-front Solution](https://docs.antom.com/ac/pm/prefront.md): Present bank lists, payment details, QR codes, or payment passwords directly on your page.
+
+### Supported Payment Methods by Category
+**Digital Wallets:** [Alipay](https://docs.antom.com/ac/antomop/alipay_cn.md), [AlipayHK](https://docs.antom.com/ac/antomop/aplusalipayhk.md), [Apple Pay](https://docs.antom.com/ac/antomop/applepay.md), [Google Pay](https://docs.antom.com/ac/antomop/googlepay.md), [GCash](https://docs.antom.com/ac/antomop/gcash.md), [GoPay](https://docs.antom.com/ac/antomop/gopay.md), [DANA](https://docs.antom.com/ac/antomop/DANA.md), [OVO](https://docs.antom.com/ac/antomop/ovo.md), [ShopeePay](https://docs.antom.com/ac/antomop/shopeepay.md), [PayPay](https://docs.antom.com/ac/antomop/paypay_mdx.md), [LINE Pay](https://docs.antom.com/ac/antomop/rabbitlinepay.md), [Kakao Pay](https://docs.antom.com/ac/antomop/kakaopay.md), [Toss Pay](https://docs.antom.com/ac/antomop/tosspay.md), [NAVER Pay](https://docs.antom.com/ac/antomop/naverpay.md), [TrueMoney](https://docs.antom.com/ac/antomop/truemoney.md), [GrabPay MY/PH](https://docs.antom.com/ac/antomop/grabpay_.md), [GrabPay SG](https://docs.antom.com/ac/antomop/grabpay_sg.md), [Boost](https://docs.antom.com/ac/antomop/boost.md), [Touch'n Go](https://docs.antom.com/ac/antomop/touchngo.md), [MoMo](https://docs.antom.com/ac/antomop/momo.md), [ZaloPay](https://docs.antom.com/ac/antomop/zalopay.md), [TWINT](https://docs.antom.com/ac/antomop/twint.md), [Mercado Pago](https://docs.antom.com/ac/antomop/mp_mdx.md), [Samsung Pay](https://docs.antom.com/ac/antomop/samsung_pay.md), [merpay](https://docs.antom.com/ac/antomop/merpay.md), [Rakuten Pay](https://docs.antom.com/ac/antomop/rakuten_pay.md), [au PAY](https://docs.antom.com/ac/antomop/aupay.md), [dBarai](https://docs.antom.com/ac/antomop/dbarai.md), [FamiPay](https://docs.antom.com/ac/antomop/famipay.md), [Maya](https://docs.antom.com/ac/antomop/maya.md), [LinkAja](https://docs.antom.com/ac/antomop/linkaja.md), [Viettel Money](https://docs.antom.com/ac/antomop/viettelmoney.md), [MPay](https://docs.antom.com/ac/antomop/mpay.md), [JKOPay](https://docs.antom.com/ac/antomop/jkopay.md), [Hipay](https://docs.antom.com/ac/antomop/hipay.md), [Changi Pay](https://docs.antom.com/ac/antomop/changipay.md), [Klarna](https://docs.antom.com/ac/antomop/klarna.md), [MB WAY](https://docs.antom.com/ac/antomop/mbway.md), [Bizum](https://docs.antom.com/ac/antomop/bizum.md), [PayPal](https://docs.antom.com/ac/antomop/paypal.md), [Venmo](https://docs.antom.com/ac/antomop/venmo.md), [Cash App Pay](https://docs.antom.com/ac/antomop/cashapppay.md), [K PLUS](https://docs.antom.com/ac/antomop/kplus.md), [Octopus](https://docs.antom.com/ac/antomop/octopus.md), [PayMe](https://docs.antom.com/ac/antomop/payme.md), [Swish](https://docs.antom.com/ac/antomop/swish.md).
+
+**Cards:** [Visa](https://docs.antom.com/ac/antomop/visa_mdx.md), [Mastercard](https://docs.antom.com/ac/antomop/mastercard_mdx.md), [American Express](https://docs.antom.com/ac/antomop/amex.md), [JCB](https://docs.antom.com/ac/antomop/jcb_mdx.md), [UnionPay](https://docs.antom.com/ac/antomop/unionpay_mdx.md), [Discover](https://docs.antom.com/ac/antomop/discover.md), [Diners](https://docs.antom.com/ac/antomop/diners.md), [Maestro](https://docs.antom.com/ac/antomop/maestro.md), [Cartes Bancaires](https://docs.antom.com/ac/antomop/cartes_bancaires_mdx.md), [Brazilian Cards](https://docs.antom.com/ac/antomop/brazilian_mdx.md), [Chilean Cards](https://docs.antom.com/ac/antomop/chilean_mdx.md), [Indian Cards](https://docs.antom.com/ac/antomop/indian.md), [Mexican Cards](https://docs.antom.com/ac/antomop/mexican_mdx.md), [South Korean Cards](https://docs.antom.com/ac/antomop/south_korean_mdx.md), [Turkish Cards](https://docs.antom.com/ac/antomop/turkish_mdx.md), [Peruvian Cards](https://docs.antom.com/ac/antomop/peruvian_mdx.md). See [Cards Overview](https://docs.antom.com/ac/antomop/card_overview.md).
+
+**Bank Transfers & Online Banking:** [iDEAL](https://docs.antom.com/ac/antomop/ideal.md), [Bancontact](https://docs.antom.com/ac/antomop/bancontact.md), [BLIK](https://docs.antom.com/ac/antomop/blik.md), [Przelewy24](https://docs.antom.com/ac/antomop/przelewy24.md), [EPS](https://docs.antom.com/ac/antomop/eps.md), [Pix](https://docs.antom.com/ac/antomop/pix.md), [PromptPay](https://docs.antom.com/ac/antomop/promptpay.md), [VietQR](https://docs.antom.com/ac/antomop/vietqr.md), [FPX](https://docs.antom.com/ac/antomop/fpx.md), [UPI](https://docs.antom.com/ac/antomop/upi.md), [ACH Direct Debit](https://docs.antom.com/ac/antomop/ach.md), [QRIS](https://docs.antom.com/ac/antomop/qris.md), [PayNow](https://docs.antom.com/ac/antomop/paynow.md), [QRPH](https://docs.antom.com/ac/antomop/qrph.md), [Net Banking](https://docs.antom.com/ac/antomop/net_banking.md), [Pay by Bank](https://docs.antom.com/ac/antomop/pay_by_bank.md), [Pay-easy](https://docs.antom.com/ac/antomop/payeasy.md), [PayU](https://docs.antom.com/ac/antomop/payu.md), [Korean Virtual Account](https://docs.antom.com/ac/antomop/virtual_account.md), [Express Bank Transfer](https://docs.antom.com/ac/antomop/express_bank_transfer.md), [BPI](https://docs.antom.com/ac/antomop/aplusbpi.md), [UnionBank](https://docs.antom.com/ac/antomop/unionbank.md), and Thai banks ([Bangkok Bank](https://docs.antom.com/ac/antomop/bangkok_bank.md), [Kbank](https://docs.antom.com/ac/antomop/kbank.md), [SCB](https://docs.antom.com/ac/antomop/scb.md), [KTB](https://docs.antom.com/ac/antomop/kyb.md), [Bank of Ayudhya](https://docs.antom.com/ac/antomop/bay.md), [GSB](https://docs.antom.com/ac/antomop/gsb.md)), [Kaspi](https://docs.antom.com/ac/antomop/kaspi.md), [PicPay](https://docs.antom.com/ac/antomop/picpay.md), [Satispay](https://docs.antom.com/ac/antomop/satispay.md), [Tinaba](https://docs.antom.com/ac/antomop/tinaba.md), [BANCOMAT Pay](https://docs.antom.com/ac/antomop/bancomat_pay.md).
+
+**Buy Now Pay Later:** [BillEase](https://docs.antom.com/ac/antomop/billease.md), [Kredivo](https://docs.antom.com/ac/antomop/kredivo.md), [Paidy](https://docs.antom.com/ac/antomop/paidy.md), [Tabby](https://docs.antom.com/ac/antomop/tabby.md), [Tamara](https://docs.antom.com/ac/antomop/tamara.md), [seQura](https://docs.antom.com/ac/antomop/sequra.md), [Pagaleve](https://docs.antom.com/ac/antomop/Pagaleve.md).
+
+**Other:** [Direct Carrier Billing](https://docs.antom.com/ac/antomop/dcb.md), [Konbini](https://docs.antom.com/ac/antomop/Konbini_mdx.md), [Konbini 7-Eleven](https://docs.antom.com/ac/antomop/Konbini_711_mdx.md).
+
+## APIs & SDKs
+### Core APIs (every integration uses these)
++ [createPaymentSession (One-time)](https://docs.antom.com/ac/ams/session_cashier.md): **Recommended entry point** for One-time Payments. Returns encrypted paymentSessionData for SDK initialization. Use this instead of `pay`.
++ [pay (One-time)](https://docs.antom.com/ac/ams/payment_cashier.md): API-only path. Returns redirect URL. **Use ONLY when SDK is not feasible.** Lower conversion than createPaymentSession + SDK.
++ [notifyPayment](https://docs.antom.com/ac/ams/paymentrn_online.md): **[CRITICAL]** Async webhook for final payment result. You MUST implement this. This is the source of truth — do NOT rely on synchronous responses.
++ [inquiryPayment](https://docs.antom.com/ac/ams/paymentri_online.md): Query payment status. **Fallback only** — use when notifyPayment is not received within 5 minutes. Do NOT poll this API as primary result source.
++ [refund](https://docs.antom.com/ac/ams/refund_online.md): Full or partial refund. Multiple partial refunds allowed up to original amount.
++ [cancel](https://docs.antom.com/ac/ams/paymentc_online.md): Cancel a pending payment within the cancellation window.
++ [Idempotency](https://docs.antom.com/ac/ams/idempotency.md): **Required for all write APIs** (pay, refund, cancel, capture). Pass unique paymentRequestId/refundRequestId to prevent duplicate transactions.
++ [Sign a Request](https://docs.antom.com/ac/ams/digital_signature.md): RSA/SHA256 signature. Use [Server-side SDKs](https://docs.antom.com/ac/sdks/server_sdks.md) instead of manual implementation.
+
+### Tokenized Payment APIs
++ [consult (Authorization)](https://docs.antom.com/ac/ams/authconsult.md): Get authorization URL. **First step** in tokenized flow.
++ [applyToken](https://docs.antom.com/ac/ams/accesstokenapp.md): Exchange auth code for accessToken. **Prerequisite: user completed authorization via consult URL and notifyAuthorization received.**
++ [pay (Tokenized)](https://docs.antom.com/ac/ams/payment_agreement.md): Charge using accessToken. **Do NOT confuse with pay (One-time)** — this requires a valid accessToken, not paymentSessionData.
++ [createPaymentSession (Tokenized)](https://docs.antom.com/ac/ams/session_autodebit.md): Create a session for SDK-based Tokenized Payment.
++ [consult (Pre-debit)](https://docs.antom.com/ac/ams/consult_auto.md): Check if a tokenized payment method can complete the payment before calling pay.
++ [revoke](https://docs.antom.com/ac/ams/authrevocation.md): Cancel authorization. **Tokenized Payment only.** For EasySafePay deauthorization, see [EasySafePay Revoke](https://docs.antom.com/ac/easypay/revoke.md).
+
+### Subscription APIs
++ [create](https://docs.antom.com/ac/ams/create_sub.md): Create subscription. Returns authorization URL for user approval.
++ [update](https://docs.antom.com/ac/ams/update.md): Modify subscription metadata (description, period). **No billing change.**
++ [change](https://docs.antom.com/ac/ams/change_sub.md): Change subscription plan with **prorated billing adjustments**. For metadata-only changes, use [update](https://docs.antom.com/ac/ams/update.md) instead.
++ [cancel (Subscription)](https://docs.antom.com/ac/ams/cancel_sub.md): Cancel or terminate subscription. **Not the same as cancel (One-time)** — this stops recurring billing.
+
+### EasySafePay APIs
++ [createPaymentSession (EasySafePay)](https://docs.antom.com/ac/ams/createpaymentsession_easypay.md): Create a payment session for EasySafePay SDK integration.
+
+### Card Vaulting APIs
++ [createVaultingSession](https://docs.antom.com/ac/ams/vaulting_session.md): Create vaulting session for SDK-based card binding. **Use this for SDK integration.** For API-only, see [vaultPaymentMethod](https://docs.antom.com/ac/ams/vault_method.md).
++ [vaultPaymentMethod](https://docs.antom.com/ac/ams/vault_method.md): Vault a card via API. **Use for API-only integration** or when SDK is not available.
++ [inquireVaulting](https://docs.antom.com/ac/ams/inquire_vaulting.md): Query the status of a card vaulting request.
++ [fetchNonce](https://docs.antom.com/ac/ams/fetchnouce.md): Collect card info securely when the merchant does not have PCI qualification.
+
+### Payment Lifecycle APIs
++ [capture](https://docs.antom.com/ac/ams/capture.md): Capture authorized funds. **Only needed when manual capture mode is enabled** (default is auto-capture). Check merchant configuration before using.
++ [notifyRefund](https://docs.antom.com/ac/ams/notify_refund.md): Async notification of refund result.
++ [notifyCapture](https://docs.antom.com/ac/ams/notify_capture.md): Async notification of capture result. **Only for manual capture mode.**
++ [notifyReversal](https://docs.antom.com/ac/ams/notify_reversal.md): Abnormal transaction notification. Requires merchant action.
+
+### Notification Webhooks
++ [notifyAuthorization](https://docs.antom.com/ac/ams/notifyauth.md): User authorization result — success or cancellation.
++ [notifyVaulting](https://docs.antom.com/ac/ams/notify_vaulting.md): Card vaulting reaches final state (success or failure).
++ [notifySubscription](https://docs.antom.com/ac/ams/notify_sub.md): Subscription creation result — success or failure.
++ [notifyPayment (Subscription)](https://docs.antom.com/ac/ams/notify_subpayment.md): Each subscription period's automatic deduction result.
++ [notifyDispute](https://docs.antom.com/ac/ams/notify_dispute.md): Dispute (chargeback) raised against a transaction.
+
+### Dispute APIs
++ [acceptDispute](https://docs.antom.com/ac/ams/accept.md): Accept a dispute and agree to refund.
++ [supplyDefenseDocument](https://docs.antom.com/ac/ams/supply_evidence.md): Upload evidence to defend against a chargeback within the time limit.
++ [downloadDisputeEvidence](https://docs.antom.com/ac/ams/download.md): Download dispute evidence template and previously uploaded files.
+
+### APO APIs
++ [pay (APO)](https://docs.antom.com/ac/ams/payment_cashier.md): APO payment API.
++ [verifyAndCompletePayment](https://docs.antom.com/ac/ams/verify_complete.md): Verify and complete APO payment.
++ [createPaymentSession (APO)](https://docs.antom.com/ac/ams/session_cashier.md): Create payment session for APO SDK integration.
++ [capture (APO)](https://docs.antom.com/ac/ams/capture.md): Capture authorized APO payment.
++ [cancel (APO)](https://docs.antom.com/ac/ams/paymentc_online.md): Cancel APO transaction.
++ [refund (APO)](https://docs.antom.com/ac/ams/refund_online.md): Refund APO transaction.
++ [inquiryPayment (APO)](https://docs.antom.com/ac/ams/paymentri_online.md): Query APO payment status.
++ [notifyPayment (APO)](https://docs.antom.com/ac/ams/paymentrn_online.md): APO payment notification.
++ [notifyCapture (APO)](https://docs.antom.com/ac/ams/notify_capture.md): APO capture notification.
++ [notifyDispute (APO)](https://docs.antom.com/ac/ams/notify_dispute.md): APO dispute notification.
++ [notifyRefund (APO)](https://docs.antom.com/ac/ams/notify_refund.md): APO refund notification.
++ [inquiryRefund (APO)](https://docs.antom.com/ac/ams/ir_online.md): Query APO refund status.
++ [createVaultingSession (APO)](https://docs.antom.com/ac/ams/vaulting_session.md): Create vaulting session in APO.
++ [vaultPaymentMethod (APO)](https://docs.antom.com/ac/ams/vault_method.md): Vault a card via API in APO.
++ [notifyVaulting (APO)](https://docs.antom.com/ac/ams/notify_vaulting.md): APO vaulting notification.
++ [inquireVaulting (APO)](https://docs.antom.com/ac/ams/inquire_vaulting.md): Query APO vaulting status.
+
+### Utility APIs
++ [Message Encoding](https://docs.antom.com/ac/ams/me.md): Base64 and URL encoding for special characters in API messages.
++ [initializeAuthentication](https://docs.antom.com/ac/ams/init_auth.md): Collect device and browser data for 3D Secure transactions before payment.
++ [ISO Codes](https://docs.antom.com/ac/ams/isocode.md): Valid response codes for Visa, Mastercard, AMEX network messages.
++ [Merchant Advice Code](https://docs.antom.com/ac/ams/mac.md): Mastercard-specific codes returned for approved and declined payments.
++ [declare](https://docs.antom.com/ac/ams/declare.md): Transmit payment info to customs for cross-border transactions requiring customs declaration.
++ [inquiryDeclarationRequests](https://docs.antom.com/ac/ams/inquirydeclare.md): Query customs declaration status.
++ [registration](https://docs.antom.com/ac/ams/registration_online.md): Register a sub-merchant with Antom (for platform/aggregator models).
++ [inquiryRegistrationStatus](https://docs.antom.com/ac/ams/irs_online.md): Query sub-merchant registration status.
++ [uploadInvoiceShippingFile](https://docs.antom.com/ac/ams/uploadInvoiceShippingFile.md): Upload invoice or logistics files. Required for UPI, Net Banking, and Indian card payments.
+
+### Full API Reference
++ [Antom APIs](https://docs.antom.com/ac/ams/api.md): Complete list of all Antom APIs with parameters and response codes.
++ [API Overview](https://docs.antom.com/ac/ams/api_fund.md): Request format, authentication, and common response codes.
+
+### Server-side SDKs
++ [Server-side SDKs](https://docs.antom.com/ac/sdks/server_sdks.md): Official libraries for Java, Node.js, PHP, and Python. Handle API signatures, request construction, and response parsing automatically. Always use these instead of raw HTTP calls.
++ [SDK Overview](https://docs.antom.com/ac/sdks/overview.md): Architecture overview of Antom's server-side and client-side SDK system.
+
+### Client-side SDKs
++ [Web/WAP SDK](https://docs.antom.com/ac/sdks/web.md): Integrate payment UI into web and mobile web applications. Supports npm and CDN installation.
++ [Android SDK](https://docs.antom.com/ac/sdks/android.md): Native Android SDK integration via Maven or manual import.
++ [iOS SDK](https://docs.antom.com/ac/sdks/ios.md): Native iOS SDK integration via CocoaPods or manual import.
++ [Flutter SDK](https://docs.antom.com/ac/sdks/flutter.md): Fullter SDK integration using the pubspec.yaml file.
+
+### Web SDK Key Methods
++ [loadAntom()](https://docs.antom.com/ac/sdks/web_loadAntom.md): Entry function. Must be called first.
++ [antom.createElement()](https://docs.antom.com/ac/sdks/web_antom-createElement.md): Create payment or card binding element by type.
++ [AMSElement](https://docs.antom.com/ac/sdks/web_AMSElement.md): Configuration for Payment Element (env, locale, paymentSessionData).
++ [submitPayment()](https://docs.antom.com/ac/sdks/web_submitPayment.md): Initiate payment after buyer completes form.
++ [element.on()](https://docs.antom.com/ac/sdks/web_element-on.md): Register event listeners (ready, error, payment completion).
++ [Full SDK Reference →](https://docs.antom.com/ac/sdks/web.md): mount(), unmount(), destroy(), confirmPayment(), confirmCardSetup(), CVVElement, VaultingElement, updateConfig(), and more.
+
+### Android SDK Key Methods
+- [AMSPaymentElement.Builder](https://docs.antom.com/ac/sdks/android_AMSPaymentElement.Builder.md): Create the AMSPaymentElement instance.
+- [createComponent()](https://docs.antom.com/ac/sdks/android_createComponent.md): Create and display the payment or card binding component UI.
+- [OnSubmitPayListener()](https://docs.antom.com/ac/sdks/android_OnSubmitPayListener.md): Listen for payment submission or card binding results, and receives callback notifications when the payment submission or card binding status changes.
+- [Full SDK Reference →](https://docs.antom.com/ac/sdks/android.md): preload(), setLocale(), setOption(), confirmPayment(), and more.
+
+### iOS SDK Key Methods
+- [AMSPaymentElement](https://docs.antom.com/ac/sdks/ios_AMSPaymentElement.md): Main class used to integrate the Antom Payment Element payment component in iOS applications.
+- [createComponent()](https://docs.antom.com/ac/sdks/ios_createComponent.md): Create and display the payment or card binding component UI.
+- [AMSPaymentProtocol](https://docs.antom.com/ac/sdks/ios_AMSPaymentProtocol.md): Callback protocol for payment or card binding processes.
+- [Full SDK Reference →](https://docs.antom.com/ac/sdks/ios.md): preload(), initConfiguration(), confirmPayment(), and more.
+
+### Flutter SDK Key Methods
+- [AMSPaymentElement](https://docs.antom.com/ac/sdks/flutter_AMSPaymentElement.md): Initialize the SDK, create and display payment page, confirm payments, and manage component lifecycles.
+- [createComponent()](https://docs.antom.com/ac/sdks/flutter_createComponent.md): Create and display the payment or card binding component UI.
+- [setOnSubmitPayListener()](https://docs.antom.com/ac/sdks/flutter_setOnSubmitPayListener.md): Listen for payment submission or card binding results, and receives callback notifications when the payment submission or card binding status changes.
+- [Full SDK Reference →](https://docs.antom.com/ac/sdks/flutter.md): preload(), setLocale(), setOption(), confirmPayment(), and more.
+
+### Testing Tools
++ [Sandbox](https://docs.antom.com/ac/ref/sandbox.md): Simulated environment for testing payments without real transactions. Always validate here before going live.
++ [Test Cards](https://docs.antom.com/ac/ref/card.md): Simulate card payment scenarios — approval, decline, 3DS challenge, and various error cases.
++ [Test Wallet](https://docs.antom.com/ac/ref/testwallet.md): Mobile app for simulating digital wallet payments end-to-end.
++ [Test Other Methods](https://docs.antom.com/ac/ref/other.md): Simulate bank transfer, BNPL, and other non-card, non-wallet payments in sandbox.
++ [Testing Resources](https://docs.antom.com/ac/ref/test_resource.md): Complete list of test credentials and resources for all supported payment methods.
++ [How to Test Digital Wallet](https://docs.antom.com/ac/ref/test_digital_wallet.md): Guide for testing digital wallet payment flows in sandbox.
++ [Integration Skill](https://docs.antom.com/ac/ref/skill.md): AI-powered tool that generates payment integration code from natural language instructions.
++ [Antom CLI user guide](https://docs.antom.com/ac/ref/antom_cli.md): A command-line tool that helps developers to complete operations such as login authorization, merchant profile management, etc, directly from the terminal.
+
+### Reference
++ [Integration Mode](https://docs.antom.com/ac/ref/oy9921.md): Three business models — merchant/ACQ, ISV, and system integrator. Choose based on your business structure.
++ [MCC Codes](https://docs.antom.com/ac/ref/mcccodes.md): Merchant Category Code list for merchant classification.
++ [Amount Object Rules](https://docs.antom.com/ac/ref/cc.md): Currency codes and value formatting. All amounts must be in the smallest currency unit.
++ [Risk Management Methods](https://docs.antom.com/ac/ref/risk_methods.md): AVS and CVV verification for fraud prevention in card payments.
++ [Secure File Transmission](https://docs.antom.com/ac/ref/xgcpey.md): Security requirements for file upload and download.
++ [Brand Assets](https://docs.antom.com/ac/ref/brandasset.md): Download official payment method logos for display on checkout pages.
+
+## Post-Payment Operations
+### Reconciliation and Settlement
++ [Overview](https://docs.antom.com/ac/reconcile/overview.md): Antom's settlement process and how to reconcile transactions.
++ [Settlement Rules](https://docs.antom.com/ac/reconcile/rules.md): Settlement schedule, currencies, and calculation methods.
++ [Settlement Lifecycle](https://docs.antom.com/ac/reconcile/lifecycle.md): How currency conversion modes affect settlement timing.
++ [Perform Reconciliation](https://docs.antom.com/ac/reconcile/perform.md): Match transactions using reports or the Antom Dashboard.
++ [Transaction Details Report](https://docs.antom.com/ac/reconcile/transaction_details.md): Daily report of all successful transactions (generated T+1).
++ [Settlement Details Report](https://docs.antom.com/ac/reconcile/settlement_details.md): Per-settlement-period transaction details for reconciliation.
++ [Settlement Summary Report](https://docs.antom.com/ac/reconcile/settlement_summary.md): Summary of total transactions and net settlement per period.
++ [Report Field Summary](https://docs.antom.com/ac/reconcile/field_summary.md): Compare fields across different reconciliation reports.
+
+### Dispute Management
++ [Overview](https://docs.antom.com/ac/dispute/overview.md): Dispute procedures, key terms, and best practices for chargebacks.
++ [How Disputes Work](https://docs.antom.com/ac/dispute/process.md): Three-stage process — retrieval request, refund escalation, chargeback.
++ [Dispute Process by Payment Method](https://docs.antom.com/ac/dispute/process_payment_methods.md): Method-specific dispute procedures.
++ [Responsibilities](https://docs.antom.com/ac/dispute/pr.md): Merchant vs Antom obligations in dispute resolution.
++ [Dispute Resolution](https://docs.antom.com/ac/dispute/dispute_resolution.md): Four mechanisms — retrieval, chargeback, RDR, compliance request.
++ [Handle a Chargeback](https://docs.antom.com/ac/dispute/handle_chargeback.md): Response options, documentation requirements, and deadlines.
++ [Defend a Chargeback](https://docs.antom.com/ac/dispute/defendchargeback.md): Use Antom's AI assistant and auto-defense tools for chargeback defense.
++ [Minimize Chargebacks](https://docs.antom.com/ac/dispute/bp.md): Prevent disputes through better customer service and transaction clarity.
++ [Chargeback Reason Codes](https://docs.antom.com/ac/dispute/reason_code.md): Reference codes for [Visa](https://docs.antom.com/ac/dispute/visa.md), [Mastercard](https://docs.antom.com/ac/dispute/mastercard.md), [AMEX](https://docs.antom.com/ac/dispute/amex.md), [Discover/Diners](https://docs.antom.com/ac/dispute/diners.md), [UnionPay](https://docs.antom.com/ac/dispute/oc.md), [JCB](https://docs.antom.com/ac/dispute/jcb.md), [Cartes Bancaires](https://docs.antom.com/ac/dispute/cb.md), [Other](https://docs.antom.com/ac/dispute/cs.md).
++ [Card Monitoring Programs](https://docs.antom.com/ac/dispute/monitor.md): Visa and Mastercard chargeback/fraud ratio monitoring.
++ [RDR](https://docs.antom.com/ac/dispute/rdr.md): Rapid Dispute Resolution — automatic refund for eligible chargebacks.
++ [CDRN](https://docs.antom.com/ac/dispute/cdrn.md): Proactive dispute alerts to prevent chargebacks.
++ [Chargeback Time Frames](https://docs.antom.com/ac/dispute/timeframe.md): Deadlines for chargeback responses by card scheme.
++ [NoC Configuration](https://docs.antom.com/ac/dispute/noc.md): Configure webhook URL for chargeback alert notifications.
++ [Antom Fraud Control](https://docs.antom.com/ac/dispute/fraud.md): Anti-fraud tools and services.
+
+### Antom Shield (Risk Management)
++ [Overview](https://docs.antom.com/ac/antomshield/overview.md): Tiered intelligent risk control for fraud prevention.
++ [Understand Fraud](https://docs.antom.com/ac/antomshield/fraud.md): Types of online payment fraud — stolen cards, card testing, friendly fraud.
++ [Enhance Risk Assessment](https://docs.antom.com/ac/antomshield/getstarted.md): Improve data quality and integrate security SDKs for better risk scoring.
++ [Shield Score](https://docs.antom.com/ac/antomshield/risklevel.md): ML-based transaction risk score. Higher tiers get customized models.
++ [Lists](https://docs.antom.com/ac/antomshield/list.md): Manage allowlists and blocklists for user information.
++ [Rules](https://docs.antom.com/ac/antomshield/rules.md): Configure custom risk control rules — block, approve, or trigger 3DS.
++ [Supported Variables](https://docs.antom.com/ac/antomshield/supported-attributes.md): Variables available for rule configuration.
++ [Smart Simulation](https://docs.antom.com/ac/antomshield/simulation.md): Test new rules against historical data before deployment (Pro tier).
++ [Fraud Ring Detection](https://docs.antom.com/ac/antomshield/analysis.md): AI-powered detection of organized fraud networks (Pro tier).
++ [Expert Decisions](https://docs.antom.com/ac/antomshield/premium.md): Real-time risk assessment by Antom experts (Premium tier).
++ [Smart Defense](https://docs.antom.com/ac/antomshield/defense.md): AI-powered chargeback dispute defense with auto-generated templates (Premium tier).
+
+## Revenue Optimization
++ [Revenue Booster](https://docs.antom.com/ac/revenuebooster/overview.md): AI-powered card payment optimization — smart routing, network tokenization, and adaptive messaging for higher approval rates.
++ [Combined Payment](https://docs.antom.com/ac/combinedpay/overview.md): Single checkout for multi-merchant purchases in marketplace/platform scenarios.
++ [Flexible Settlement](https://docs.antom.com/ac/flexiblesettlement/overview.md): Automatic fund splitting among multiple parties after transaction settlement.
+
+## Antom Dashboard
++ [Overview](https://docs.antom.com/ac/merchant_service/overview.md): Guide to day-to-day business operations on the Antom Dashboard.
++ [Get Started](https://docs.antom.com/ac/merchant_service/antom_dashboard.md): Account registration, sandbox testing, and live mode activation.
++ [Merchant Onboarding](https://docs.antom.com/ac/merchant_service/merchant_onboard.md): Four-step account activation process.
++ [API Key Configuration](https://docs.antom.com/ac/merchant_service/key_config.md): Set up API keys before starting integration.
++ [Notification URL](https://docs.antom.com/ac/merchant_service/notification.md): Configure and test webhook endpoints for async notifications.
++ [Enable Payment Methods](https://docs.antom.com/ac/merchant_service/enable_payment.md): Activate payment methods on the dashboard.
++ [Settlement Plan](https://docs.antom.com/ac/merchant_service/settlement_plan.md): Configure settlement currency, bank account, and minimum amount.
++ [Transaction Management](https://docs.antom.com/ac/merchant_service/transactions.md): View, search, and manage transactions.
++ [Dispute Management](https://docs.antom.com/ac/merchant_service/dispute.md): Handle chargebacks and configure alert settings.
++ [Reports](https://docs.antom.com/ac/merchant_service/reports.md): Generate and download real-time or historical reports.
++ [Payment Links](https://docs.antom.com/ac/merchant_service/payment_links.md): Create shareable payment links for accepting payments without integration.
++ [Test Cases](https://docs.antom.com/ac/merchant_service/test_case.md): Mandatory integration verification before going live.
++ [Multi-operator](https://docs.antom.com/ac/merchant_service/multi_operator.md): Manage team member access and permissions.
++ [Account Management](https://docs.antom.com/ac/merchant_service/account_manage.md): View and manage merchant account information.
+
+## Plugins
++ [Shopify plugin product overview](https://docs.antom.com/ac/plugins/shopify.md): Learn more about the product capabilities of the Shopify plugin.
++ [Shopify plugin installation guide](https://docs.antom.com/ac/plugins/shopify_installation.md): Discover the Shopify integration guide and learn about how to create and activate an account in the Shopify admin portal.
++ [WooCommerce plugin product overview](https://docs.antom.com/ac/plugins/woocommerce.md): Learn more about the product capabilities of the WooCommerce plugin.
++ [WooCommerce plugin installation guide](https://docs.antom.com/ac/plugins/woocommerce_installation.md): Learn how to install the Antom Payments plugin for your WooCommerce store.
+
+## Compliance & Troubleshooting
+### Compliance Routing
+| Requirement | What you need | Key docs |
+| --- | --- | --- |
+| European card payments (PSD2/SCA) | 3DS authentication is mandatory | [3D Secure 2](https://docs.antom.com/ac/pm/3ds.md) |
+| India RBI tokenization | Tokenized card storage required | [Antom Tokenization](https://docs.antom.com/ac/pm/tokenization.md) |
+| PCI DSS compliance | Server-to-server card API requires your own PCI certification | [Card S2S](https://docs.antom.com/ac/cashierpay/cardinfocallmerchant.md) |
+| Custom risk rules | Antom Shield rule configuration | [Shield Rules](https://docs.antom.com/ac/antomshield/rules.md) |
+
+
+### Troubleshooting Routing
+| Symptom | First check | Then check |
+| --- | --- | --- |
+| Payment always fails | [Sandbox test](https://docs.antom.com/ac/ref/sandbox.md) → verify credentials | [Test Cards](https://docs.antom.com/ac/ref/card.md) |
+| No async notification received | [Notification URL config](https://docs.antom.com/ac/merchant_service/notification.md) | Network/firewall settings |
+| 3DS challenge not triggered | [3DS integration](https://docs.antom.com/ac/pm/3ds.md) | [initializeAuthentication](https://docs.antom.com/ac/ams/init_auth.md) |
+| Refund rejected | [Refund rules](https://docs.antom.com/ac/cashierpay/refund.md) | Transaction status and window |
+| Card declined without 3DS | [Risk control rules](https://docs.antom.com/ac/antomshield/rules.md) | [Shield score](https://docs.antom.com/ac/antomshield/risklevel.md) |
+| Wrong payment method shown | [Specify a payment method](https://docs.antom.com/ac/pm/specify_pm.md) | [Payment method availability](https://docs.antom.com/ac/pm/overview.md) |
+
+
+## FAQ & Support
++ [General Questions](https://docs.antom.com/ac/questions/general_question.md): Common inquiries about Antom services and account setup.
++ [Payment (One-time)](https://docs.antom.com/ac/questions/pay.md): Integration, redirections, notifications, and result codes for One-time Payments.
++ [Refund](https://docs.antom.com/ac/questions/refund_question.md): Refund policies, timelines, and common issues.
++ [Sandbox](https://docs.antom.com/ac/questions/sandbox_question.md): Sandbox environment setup and troubleshooting.
++ [Settlement](https://docs.antom.com/ac/questions/settlement_question.md): Settlement timing, currencies, and common questions.
++ [Dashboard](https://docs.antom.com/ac/questions/dashboard_question.md): Dashboard operations and troubleshooting.
++ [Reports](https://docs.antom.com/ac/questions/report_question.md): Report generation, download, and field interpretation.
++ [Support](https://docs.antom.com/support.md): Contact channels and troubleshooting resources when integration issues arise.

@@ -1,0 +1,36 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/releasenotes
+docs: https://docs.antom.com/releasenotes
+scheme: dated (documentation release notes)
+current_api_version: v1
+entries:
+  - date: '2026-03'
+    additions: [Direct Carrier Billing, seQura, Samsung Pay]
+    highlights: >-
+      Added three payment methods; expanded Subscription Payment docs
+      (Payment Element, Checkout Page, API-only).
+  - date: '2026-02'
+    additions: [PayMe, verifyAndCompletePayment API]
+    highlights: >-
+      Renamed "Auto Debit" product to "Tokenized Payment"; updated field
+      descriptions across multiple APIs.
+  - date: '2026-01'
+    additions: [MB_WAY]
+    highlights: >-
+      Expanded Auto Debit fields (recurringType, env.deviceId, agreementInfo);
+      added card payment features docs incl. 3D Secure 2 and installments.
+  - date: '2025-12'
+    additions: [Hipay, Tinaba, LinkAja]
+    highlights: >-
+      Renamed "Checkout Payment" to "One-time Payments"; introduced Merchant
+      service docs (home, balance, risk management).
+  - date: '2025-11'
+    highlights: >-
+      Released new SDK version; standardized payment product names; added Antom
+      Payment Orchestration documentation.
+  - date: '2025-10'
+    additions: [Payment Element integration, appearance customization, capture]
+    highlights: >-
+      Added new error codes and fields for installment/declaration functionality
+      across payment APIs.

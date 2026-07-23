@@ -1,8 +1,17 @@
 aid: ant-group
 name: Ant Group
-description: 'Ant Group is a company surfaced as a portfolio company of hongshan and added to the API
-  Evangelist network as a stub for enrichment. Sector: technology. This profile is a lead awaiting the
-  enrichment pipeline.'
+description: >-
+  Ant Group is a Hangzhou-based fintech and technology company, operator of the
+  Alipay digital payment and lifestyle super-app and parent of the Antom global
+  merchant-payment business, the Alipay+ cross-border mobile-payment network,
+  MYbank, and the ZOLOZ digital-identity platform. Its public developer surface is
+  Antom (formerly Alipay Global), whose Alipay Merchant Services (AMS) REST API
+  covers one-time payments, tokenized/auto-debit and subscription payments,
+  refunds, captures, disputes, payouts, and 3-D Secure authentication across
+  hundreds of global payment methods. Antom publishes first-party server SDKs
+  (Java, Python, PHP, Go, .NET), a Web/WAP client SDK, a sandbox with a test
+  dashboard and test wallet, RSA256 request signing, request-scoped idempotency,
+  and dated release notes.
 url: https://raw.githubusercontent.com/api-evangelist/ant-group/refs/heads/main/apis.yml
 x-type: company
 x-source: vc-portfolio
@@ -10,13 +19,45 @@ x-backed-by:
 - hongshan
 x-tier: stub
 x-tier-reason: portfolio-lead
+accessModel:
+  pricing: unknown
+  onboarding: self-serve
+  trial: false
+  try_now: false
+  public: false
+  label: Self-serve signup
+  confidence: medium
+  source:
+  - authentication
+  generated: '2026-07-22'
+  method: derived
 specificationVersion: '0.20'
 created: '2026-07-17'
 modified: '2026-07-17'
+image: https://logo.clearbit.com/antgroup.com
 tags:
 - Company
 - Technology
-apis: []
+- Payments
+- Fintech
+- Digital Wallet
+- Cross-Border Payments
+- Merchant Services
+- Alipay
+- Antom
+apis:
+- name: Antom Payments API (Alipay Merchant Services)
+  description: >-
+    Antom (Ant Group Global) AMS REST API for online payments, tokenized and
+    subscription payments, refunds, captures, disputes, payouts and 3-D Secure 2
+    authentication across global payment methods. RSA256-signed requests.
+  humanURL: https://docs.antom.com/ac/ams/api_fund
+  baseURL: https://open-na-global.alipay.com/ams/api/v1
+  properties:
+  - type: Documentation
+    url: https://docs.antom.com/
+  - type: APIReference
+    url: https://docs.antom.com/ac/ams/api_fund
 maintainers:
 - FN: Kin Lane
   email: kin@apievangelist.com
@@ -25,3 +66,49 @@ maintainers:
 common:
 - type: Website
   url: https://antgroup.com
+- type: DeveloperPortal
+  url: https://docs.antom.com/
+- type: Documentation
+  url: https://docs.antom.com/
+- type: APIReference
+  url: https://docs.antom.com/ac/ams/api_fund
+- type: GettingStarted
+  url: https://docs.antom.com/integration_guide
+- type: GitHubOrganization
+  url: https://github.com/alipay
+- type: SignUp
+  url: https://dashboard.alipay.com/global-payments/home
+- type: Blog
+  name: Ant Group Newsroom
+  url: https://www.antgroup.com/en/news-media/media-library
+- type: PrivacyPolicy
+  url: https://render.alipay.com/p/f/agreementcenter/antom_privacy.html
+- type: TermsOfService
+  url: https://render.alipay.com/p/f/agreementcenter/antom_service.html
+- type: Packages
+  url: packages/ant-group-packages.yml
+- type: SDKs
+  url: packages/ant-group-packages.yml
+- type: Authentication
+  url: authentication/ant-group-authentication.yml
+- type: Conventions
+  url: conventions/ant-group-conventions.yml
+- type: Idempotency
+  url: conventions/ant-group-conventions.yml
+- type: Sandbox
+  url: sandbox/ant-group-sandbox.yml
+- type: ChangeLog
+  url: changelog/ant-group-changelog.yml
+- type: Conformance
+  url: conformance/ant-group-conformance.yml
+- type: DomainSecurity
+  url: security/ant-group-domain-security.yml
+- type: WellKnown
+  url: well-known/ant-group-well-known.yml
+- type: LLMsTxt
+  url: llms/ant-group-llms.txt
+x-enrichment:
+  date: '2026-07-19'
+  status: backfilled
+  pass: local-v1
+  note: backfilled from .gitignore signal + verified work evidence

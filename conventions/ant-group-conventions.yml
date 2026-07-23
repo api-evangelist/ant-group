@@ -1,0 +1,38 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/ac/ams/idempotency + https://docs.antom.com/ac/ams/digital_signature
+summary: >-
+  Cross-cutting request/response semantics for the Antom (Ant Group Global)
+  Alipay Merchant Services (AMS) API.
+authentication:
+  style: RSA256 digital signature per request + Client-Id header
+  ref: authentication/ant-group-authentication.yml
+idempotency:
+  supported: true
+  mechanism: request-scoped idempotency key field (not a header)
+  keys_by_operation:
+    pay: paymentRequestId
+    refund: refundRequestId
+    capture: captureRequestId
+    registration: registrationRequestId
+    initAuthentication: authenticationRequestId
+  behavior: >-
+    Repeated requests carrying the same key execute the underlying action once. Once
+    the transaction reaches a terminal state (S success / F failure) the same result is
+    returned. A retry after a transient error/timeout completes the action and returns
+    the result. Key request parameters (e.g. paymentRequestId, paymentAmount,
+    paymentMethodId) are validated for consistency on retry; a mismatch returns
+    REPEAT_REQ_INCONSISTENT.
+  retention: not published
+  docs: https://docs.antom.com/ac/ams/idempotency
+versioning:
+  scheme: uri-path
+  current: v1
+  base: https://open-na-global.alipay.com/ams/api/v1/
+error_envelope:
+  fields: [result.resultCode, result.resultStatus, result.resultMessage]
+  result_status_values: [S, F, U]
+  ref: errors/ (Antom result codes)
+transport:
+  protocol: HTTPS POST (JSON)
+  signing_headers: [Client-Id, Request-Time, Signature]

@@ -1,0 +1,25 @@
+generated: '2026-07-17'
+method: searched
+source: live probes of docs.antom.com, global.alipay.com, antgroup.com
+notes: >-
+  No /.well-known/ discovery documents are published on the Antom docs host or the
+  Ant Group corporate host. Absence is valid, expected data. A verbatim /llms.txt
+  IS published on the docs host and is captured under llms/.
+host: https://docs.antom.com
+documents:
+  - path: /.well-known/security.txt
+    status: 404
+  - path: /.well-known/openid-configuration
+    status: 404
+  - path: /.well-known/api-catalog
+    status: 404
+  - path: /llms.txt
+    status: 200
+    file: ../llms/ant-group-llms.txt
+other_hosts:
+  - host: https://global.alipay.com
+    path: /.well-known/security.txt
+    status: 404
+  - host: https://www.antgroup.com
+    path: /.well-known/security.txt
+    status: 404

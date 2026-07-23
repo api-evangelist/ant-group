@@ -1,0 +1,23 @@
+generated: '2026-07-17'
+method: searched
+source: https://docs.antom.com/ac/ams/digital_signature + https://docs.antom.com/releasenotes
+notes: >-
+  Cross-cutting standards the Antom (Ant Group Global) AMS API conforms to,
+  derived from published documentation. Compliance-program certifications (e.g.
+  PCI DSS) are not asserted here without a published trust/compliance page.
+standards:
+  - id: rsa-sha256-signature
+    conforms: true
+    evidence: All requests signed RSA256 (SHA256withRSA) per digital_signature docs.
+  - id: 3d-secure-2
+    conforms: true
+    evidence: Card payment docs cover 3D Secure 2 authentication (initAuthentication API).
+  - id: idempotency
+    conforms: true
+    evidence: Request-scoped idempotency keys documented per operation (idempotency docs).
+  - id: oauth2
+    conforms: false
+    evidence: Auth uses RSA digital signature + Client-Id, not OAuth2.
+  - id: rfc9457-problem-details
+    conforms: false
+    evidence: Uses proprietary result{resultCode,resultStatus,resultMessage} envelope, not problem+json.
