@@ -64,6 +64,100 @@
 > Full detail: **[Where this data comes from](https://apievangelist.com/about/where-our-data-comes-from)**
 <!-- API-EVANGELIST-PROVENANCE:END -->
 
-Ant Group is a company surfaced as a portfolio company of hongshan and added to the API Evangelist network as a stub for enrichment. Sector: technology. This profile is a lead awaiting the enrichment pipeline.
+Ant Group is a Hangzhou-based fintech and technology company, operator of the Alipay digital payment and lifestyle super-app and parent of the Antom global merchant-payment business, the Alipay+ cross-border mobile-payment network, MYbank, and the ZOLOZ digital-identity platform. Its public developer surface is Antom (formerly Alipay Global), whose Alipay Merchant Services (AMS) REST API covers one-time payments, tokenized/auto-debit and subscription payments, refunds, captures, disputes, payouts, and 3-D Secure authentication across hundreds of global payment methods. Antom publishes first-party server SDKs (Java, Python, PHP, Go, .NET), a Web/WAP client SDK, a sandbox with a test dashboard and test wallet, RSA256 request signing, request-scoped idempotency, and dated release notes.
 
-Backed by: hongshan — https://antgroup.com
+**Areas:** Company · Technology · Payments · Fintech · Digital Wallet · Cross-Border Payments · Merchant Services · Alipay · Antom
+
+## Ant Group on APIs.io
+
+Everything profiled for Ant Group is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/ant-group/](https://apis.io/providers/ant-group/)** — or go straight to one of the APIs or properties below.
+
+### APIs (1)
+
+- [Antom Payments API (Alipay Merchant Services)](https://apis.io/apis/ant-group/antom-payments-api-alipay-merchant-services/) — Antom (Ant Group Global) AMS REST API for online payments, tokenized and subscription payments, refunds, captures, disputes, payouts and 3-D Secure 2…
+
+### Published properties
+
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
+
+#### MCP servers (1)
+
+Model Context Protocol servers that expose the API to agents.
+
+- [ant-group](https://apis.io/servers/ant-group/ant-group/)
+
+#### Security (2)
+
+Authentication, trust centre, and vulnerability disclosure.
+
+- [Ant Group Authentication](https://apis.io/security/ant-group/ant-group-authentication/)
+- [Ant Group Domain Security](https://apis.io/security/ant-group/ant-group-domain-security/)
+
+## Where to find this API
+
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
+
+- [Website](https://antgroup.com)
+- [Documentation](https://docs.antom.com/)
+- [Getting started](https://docs.antom.com/integration_guide)
+- [API reference](https://docs.antom.com/ac/ams/api_fund)
+- [Sign up](https://dashboard.alipay.com/global-payments/home)
+- [Blog](https://www.antgroup.com/en/news-media/media-library)
+- [Terms of service](https://render.alipay.com/p/f/agreementcenter/antom_service.html)
+- [Privacy policy](https://render.alipay.com/p/f/agreementcenter/antom_privacy.html)
+- [GitHub](https://github.com/alipay)
+
+## API Evangelist rating
+
+**Kin Score 25.6** — emerging · rubric 0.25.0 · scored 2026-10-23
+
+| Facet | Score |
+|---|---|
+| Discoverability | 75.0 |
+| Contract quality | 0.0 |
+| Contract governance | 18.2 |
+| Operational transparency | 18.4 |
+| Developer ergonomics | 66.7 |
+| Access clarity | 0.0 |
+
+**Agent readiness 18.0** — agent-aware
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | — |
+| Agentic Access | — |
+| Reversibility Documented | — |
+| MCP Server | verified |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | documented (partial credit) |
+| Error Semantics | — |
+| OpenAPI Examples | — |
+| Rate Limit Signal | — |
+| Event Surface Described | — |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | verified |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+| Pagination Ratio | na |
+| Operation Distinctiveness | na |
+
+**Regulatory alignment 20.5** — Payments
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/ant-group/](https://apis.io/providers/ant-group/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Ant Group: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/ant-group/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
